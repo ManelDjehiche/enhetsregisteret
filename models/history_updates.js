@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       table_name: DataTypes.STRING,
+      status: DataTypes.STRING,
       new_rows: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
@@ -30,7 +31,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0,
       },
       created_at: {
-        type: DataTypes.TIMESTAMP,
+        type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
       error_occurred: {
@@ -43,7 +44,9 @@ module.exports = (sequelize, DataTypes) => {
       },
     }, {
       sequelize,
-      modelName: 'HistoryUpdate',
+      timestamps: false,
+      modelName: 'history_tables',
+      tableName:'history_tables'
     });
   
     return HistoryUpdate;

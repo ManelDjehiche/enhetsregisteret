@@ -18,17 +18,16 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.STRING,
     lien: DataTypes.TEXT,
     created_at: {
-      type: DataTypes.TIMESTAMP,
-      defaultValue: DataTypes.NOW,
+      type: DataTypes.DATE
     },
     updated_at: {
-      type: DataTypes.TIMESTAMP,
-      defaultValue: DataTypes.NOW,
-      onUpdate: DataTypes.NOW,
+      type: DataTypes.DATE
     }
   }, {
     sequelize,
+    timestamps: false,
     modelName: 'organisation_forme',
+    tableName:'organisation_forme'
   });
   return organisation_forme;
 };

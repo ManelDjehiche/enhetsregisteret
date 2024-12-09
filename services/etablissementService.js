@@ -5,20 +5,22 @@ const logsService = require('./logsService');
 const representantService = require('./representantService');
 
 const fetchAndSyncEtablissements = async (cronJobId) => {
+    var newRows = 0;
+    var updatedRows = 0;
     try {
-      let page = 0;
+      await logsService.logUpdateHistory(cronJobId, 'etablissement', 'start', newRows, updatedRows);
+      console.log('\n ================= fetch Etablissements')
+      let page = 100;
       let size = 100;
       let hasMoreData = true;
-      let newRows = 0;
-      let updatedRows = 0;
   
       while (hasMoreData) {
         try {
           const response = await axios.get(`https://data.brreg.no/enhetsregisteret/api/underenheter?page=${page}&size=${size}`);
-          const etablissements = response.data._embedded.underenheter;
-          const totalElements = response.data.page.totalElements;
-  
-          if (etablissements.length === 0) {
+          const etablissements = response?.data?._embedded.underenheter || [];
+          const totalElements = response?.data?.page?.totalElements || 0;
+
+          if (etablissements.length == 0) {
             hasMoreData = false;
           } else {
             if ((page + 1) * size > totalElements) {
@@ -27,40 +29,43 @@ const fetchAndSyncEtablissements = async (cronJobId) => {
   
             for (const etablissement of etablissements) {
                 const [updatedEtablissement, created] = await Etablissement.upsert({
-                    numero_etablissement: etablissement.organisasjonsnummer,
+                    numero_organisation: etablissement.organisasjonsnummer,
                     nom: etablissement.navn,
-                    code_forme_juridique: etablissement.organisasjonsform.kode,
-                    description_forme_juridique: etablissement.organisasjonsform.beskrivelse,
-                    lien_forme_juridique: etablissement.organisasjonsform._links.self.href,
-                    date_inscription: etablissement.registreringsdatoEnhetsregisteret,
-                    secteur_activite_code: etablissement.naeringskode1.kode,
-                    secteur_activite_description: etablissement.naeringskode1.beskrivelse,
-                    email: etablissement.epostadresse,
-                    telephone_mobile: etablissement.mobil,
-                    date_debut: etablissement.oppstartsdato,
-                    adresse_physique: etablissement.beliggenhetsadresse.adresse.join(' '), // If it's an array of addresses
-                    pays_physique: etablissement.beliggenhetsadresse.land,
-                    code_pays_physique: etablissement.beliggenhetsadresse.landkode,
-                    code_postal_physique: etablissement.beliggenhetsadresse.postnummer,
-                    ville_physique: etablissement.beliggenhetsadresse.poststed,
-                    commune_physique: etablissement.beliggenhetsadresse.kommune,
-                    numero_commune_physique: etablissement.beliggenhetsadresse.kommunenummer,
-                    lien_etablissement: etablissement._links.self.href,
-                    lien_organisation_parente: etablissement._links.overordnetEnhet.href,
-                  });
-  
-              if (created) {
-                newRows++;
-              } else {
-                updatedRows++;
-              }
+                    code_forme_juridique: etablissement.organisasjonsform?.kode || null,
+                    description_forme_juridique: etablissement.organisasjonsform?.beskrivelse || null,
+                    lien_forme_juridique: etablissement.organisasjonsform?._links?.self?.href || null,
+                    site_web: etablissement.epostadresse || etablissement.website || null,
+            
+                    // Simplified address fields with consistent naming
+                    adresse_commune: etablissement.beliggenhetsadresse?.adresse.map(item => item).join(';') || null,
+                    code_pays: etablissement.beliggenhetsadresse?.landkode || null,
+                    code_postal: etablissement.beliggenhetsadresse?.postnummer || null,
+                    ville: etablissement.beliggenhetsadresse?.poststed || null,
+                    commune: etablissement.beliggenhetsadresse?.kommune || null,
+                    numero_commune: etablissement.beliggenhetsadresse?.kommunenummer || null,
+            
+                    date_inscription: etablissement.registreringsdatoEnhetsregisteret || null,
+                    secteur_activite_code: etablissement.naeringskode1?.kode || null,
+                    secteur_activite_description: etablissement.naeringskode1?.beskrivelse || null,
+                    email: etablissement.epostadresse || null,
+                    telephone_mobile: etablissement.mobil || null,
+                    date_creation: etablissement.oppstartsdato || null,
+                    lien_etablissement: etablissement._links?.self?.href || null,
+                    lien_organisation_parente: etablissement._links?.overordnetEnhet?.href || null,  // Parent link
+                    parent_organisation: etablissement.overordnetEnhet || null
+                });
+            
+                if (created) {
+                    newRows++;
+                } else {
+                    updatedRows++;
+                }
+        
             }
+            
     
             // Log the results
-            await logsService.logUpdateHistory(cronJobId, 'etablissement', newRows, updatedRows);
-
-            newRows = 0;
-            updatedRows = 0;
+            await logsService.logUpdateHistory(cronJobId, 'etablissement', 'running ...', newRows, updatedRows);
             page++;
         
   
@@ -68,15 +73,18 @@ const fetchAndSyncEtablissements = async (cronJobId) => {
               hasMoreData = false;
             }
           }
-
         } catch (err) {
+          hasMoreData = false;
           console.error(`Error fetching data for page ${page}:`, err);
-          await logsService.logUpdateHistory(cronJobId, 'etablissement', 0, 0, true, err.message);
+          await logsService.logUpdateHistory(cronJobId, 'etablissement', 'failed', newRows, updatedRows, true, err.message);
         }
       }
+      await logsService.logUpdateHistory(cronJobId, 'etablissement', 'done', newRows, updatedRows);
+      return;
     } catch (error) {
       console.error('Error syncing etablissement data:', error);
-      await logsService.logUpdateHistory(cronJobId, 'etablissement', 0, 0, true, error.message);
+      await logsService.logUpdateHistory(cronJobId, 'etablissement', 'failed', newRows, updatedRows, true, error.message);
+      return;
     }
   };
   

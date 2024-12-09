@@ -17,17 +17,16 @@ module.exports = (sequelize, DataTypes) => {
     code_municipalite: DataTypes.STRING,
     nom: DataTypes.STRING,
     created_at: {
-      type: DataTypes.TIMESTAMP,
-      defaultValue: DataTypes.NOW,
+      type: DataTypes.DATE
     },
     updated_at: {
-      type: DataTypes.TIMESTAMP,
-      defaultValue: DataTypes.NOW,
-      onUpdate: DataTypes.NOW,
+      type: DataTypes.DATE
     }
   }, {
     sequelize,
+    timestamps: false,
     modelName: 'municipalite',
+    tableName:'municipalite'
   });
   return municipalite;
 };

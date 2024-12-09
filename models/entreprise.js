@@ -20,20 +20,16 @@ module.exports = (sequelize, DataTypes) => {
     description_forme_juridique: DataTypes.STRING,
     lien_forme_juridique: DataTypes.TEXT,
     site_web: DataTypes.STRING,
-    adresse_postale: DataTypes.TEXT,
-    pays_postal: DataTypes.STRING,
-    code_pays_postal: DataTypes.STRING,
-    code_postal_postal: DataTypes.STRING,
-    ville_postale: DataTypes.STRING,
-    commune_postale: DataTypes.STRING,
-    numero_commune_postale: DataTypes.STRING,
-    adresse_physique: DataTypes.TEXT,
-    pays_physique: DataTypes.STRING,
-    code_pays_physique: DataTypes.STRING,
-    code_postal_physique: DataTypes.STRING,
-    ville_physique: DataTypes.STRING,
-    commune_physique: DataTypes.STRING,
-    numero_commune_physique: DataTypes.STRING,
+
+    // Simplified address fields
+    adresse_commune: DataTypes.TEXT,
+    code_pays: DataTypes.STRING,
+    code_postal: DataTypes.STRING,
+    ville: DataTypes.STRING,
+    commune: DataTypes.STRING,
+    numero_commune: DataTypes.STRING,
+
+    // Removed redundant fields for postal and physical addresses
     date_inscription: DataTypes.DATE,
     enregistre_au_registre_commercial: DataTypes.BOOLEAN,
     secteur_activite_code: DataTypes.STRING,
@@ -53,17 +49,16 @@ module.exports = (sequelize, DataTypes) => {
     date_inscription_registre_volontaire: DataTypes.DATE,
     lien_entreprise: DataTypes.TEXT,
     created_at: {
-      type: DataTypes.TIMESTAMP,
-      defaultValue: DataTypes.NOW,
+      type: DataTypes.DATE
     },
     updated_at: {
-      type: DataTypes.TIMESTAMP,
-      defaultValue: DataTypes.NOW,
-      onUpdate: DataTypes.NOW,
+      type: DataTypes.DATE
     },
   }, {
     sequelize,
+    timestamps: false,
     modelName: 'entreprise',
+    tableName: 'entreprise'
   });
   return Entreprise;
 };
