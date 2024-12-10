@@ -11,7 +11,7 @@ const fetchAndSyncEntreprises = async (cronJobId) => {
       await logsService.logUpdateHistory(cronJobId, 'entreprise', 'start', newRows, updatedRows);
       console.log('\n ================= fetch Entreprises')
       let page = 0;
-      let size = 100;
+      let size = 1000;
       let hasMoreData = true;
   
       while (hasMoreData) {
